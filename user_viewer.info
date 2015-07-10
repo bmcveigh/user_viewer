@@ -1,0 +1,4 @@
+name = User Viewer
+description = View data about a user including their profile picture.
+package = Pakorasoft
+core = 7.x

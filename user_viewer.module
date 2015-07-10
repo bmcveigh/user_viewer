@@ -1,0 +1,107 @@
+<?php
+
+/**
+ * @file
+ */
+
+/**
+ * Implements hook_menu().
+ */
+function user_viewer_menu() {
+  
+  $items['admin/view-user/all-user-pictures'] = array(
+    'title' => 'View All User Pictures',
+    'page callback' => 'user_viewer_all_pictures',
+    'page arguments' => array(2),
+    'access arguments' => array('access administration pages'),
+  );
+  $items['admin/view-user/%'] = array(
+    'title' => 'View User',
+    'page callback' => 'user_viewer_page',
+    'page arguments' => array(2),
+    'access callback' => TRUE,
+  );
+  
+  return $items;
+}
+
+
+/**
+ * Page callback.
+ */
+function user_viewer_page($uid = NULL) {
+  
+  $markup = '';
+  
+  if (isset($uid)) {
+    if ($user = user_load($uid)) {
+    
+      // Username
+      $markup .= '<h3>' . $user->name . '</h3>';
+
+      // Email
+      $markup .= '<p>' . $user->mail . '</p>';
+
+      // Created
+      $markup .= '<p>Account created on: ' . date('M d, Y', $user->created) . '</p>';
+
+      // Last logged in
+      $markup .= '<p>Last logged in on: ' . date('M d, Y', $user->login) . '</p>';
+
+      // Roles
+      $roles = $user->roles;
+      $markup .= theme('item_list', $roles);
+
+      if ($user->picture) {
+
+        // Profile picture
+        $variables = array(
+          'path' => $user->picture->uri,
+          'alt' => $user->name,
+          'title' => 'Here is ' . $user->name,
+          'width' => '250px',
+          'height' => '250px',
+        );
+        $markup .= theme('image', $variables);
+      }
+      else {
+        $markup .= '<img src="' . base_path() . drupal_get_path('module', 'user_viewer') . '/images/user_profile.jpg">';
+      }
+    }
+    
+  }
+  
+  return $markup;
+}
+
+/**
+ * Page callback to view all user pictures at once.
+ */
+function user_viewer_all_pictures() {
+  $output = '';
+  
+  $query = db_select('users', 'u')
+      ->fields('u', array('uid'))
+      ->condition('picture', '0', '!=')
+      ->execute();
+  
+  $result = $query->fetchAll();
+  
+  // Load the pictures for all users that uploaded a profile picture.
+  foreach ($result as $r) {
+    $user = user_load($r->uid);
+    
+    // Profile picture
+    $variables = array(
+      'path' => $user->picture->uri,
+      'alt' => $user->name,
+      'title' => 'Here is ' . $user->name,
+      'width' => '250px',
+      'height' => '250px',
+    );
+    $output .= theme('image', $variables);
+    
+  }
+  
+  return $output;
+}
